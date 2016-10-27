@@ -5,6 +5,8 @@
 #include <memory>
 #include <vector>
 #include <allegro5/allegro.h>
+#include "networking/buffer.h"
+#include "datastructures.h"
 
 // Circular dependency
 class Gamestate;
@@ -22,7 +24,8 @@ class Entity
         virtual bool isrootobject() = 0;
         virtual std::unique_ptr<Entity> clone() = 0;
         virtual void interpolate(Entity *prev_entity, Entity *next_entity, double alpha) = 0;
-        void suicide(Gamestate *state) {destroyentity = true;}
+        virtual void destroy(Gamestate *state) {destroyentity = true;}
+        ENTITYTYPE entitytype;
         uint64_t id;
         bool destroyentity = false;
 };

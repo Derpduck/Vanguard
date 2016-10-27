@@ -10,15 +10,19 @@
 class Engine
 {
     public:
-        Engine();
+        Engine(bool isserver_);
         ~Engine();
-        void update(double frametime);
+        void update(WriteBuffer *sendbuffer, double frametime);
         void loadmap(std::string mapname);
-        EntityPtr newplayer();
+        void setinput(EntityPtr myself, INPUT_CONTAINER pressed_keys, INPUT_CONTAINER held_keys, double mouse_x, double mouse_y);
 
         std::unique_ptr<Gamestate> currentstate;
         std::unique_ptr<Gamestate> oldstate;
         Spriteloader maskloader;
+        bool isserver;
+
+        // Make engine move-assigneable, so that " = " doesn't copy but move.
+        Engine & operator=(Engine &&)=default;
 };
 
 #endif // ENGINE_H

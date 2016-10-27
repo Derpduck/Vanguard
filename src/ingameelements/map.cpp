@@ -38,7 +38,7 @@ void Map::renderwallground(double cam_x, double cam_y)
 
 bool Map::collides(Gamestate *state, MovingEntity *entity)
 {
-    ALLEGRO_BITMAP *mask = state->engine->maskloader.request_sprite(entity->getsprite(state, true));
+    ALLEGRO_BITMAP *mask = state->engine->maskloader.requestsprite(entity->getsprite(state, true));
     int x = (int) entity->x - state->engine->maskloader.get_spriteoffset_x(entity->getsprite(state, true));
     int y = (int) entity->y - state->engine->maskloader.get_spriteoffset_y(entity->getsprite(state, true));
 
@@ -62,10 +62,10 @@ bool Map::collides(Gamestate *state, MovingEntity *entity)
 
 bool Map::collides(Gamestate *state, Character *entity)
 {
-    ALLEGRO_BITMAP *mask = state->engine->maskloader.request_sprite(entity->getsprite(state, true));
+    ALLEGRO_BITMAP *mask = state->engine->maskloader.requestsprite(entity->getsprite(state, true));
     int x = (int) entity->x - state->engine->maskloader.get_spriteoffset_x(entity->getsprite(state, true));
     int y = (int) entity->y - state->engine->maskloader.get_spriteoffset_y(entity->getsprite(state, true));
-    if (entity->animstate()->isflipped)
+    if (entity->isflipped)
     {
         x = (int) entity->x - (al_get_bitmap_width(mask) - state->engine->maskloader.get_spriteoffset_x(entity->getsprite(state, true)));
     }
@@ -99,6 +99,29 @@ bool Map::collides(Rect r)
         for (int j=0; j<r.h; ++j)
         {
             if (al_get_pixel(wallmask, i+r.x, j+r.y).a != 0)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool Map::collides(Rect r, double angle)
+{
+    if (r.x < 0 or r.y < 0 or r.x+r.w > al_get_bitmap_width(wallmask) or r.y+r.h > al_get_bitmap_height(wallmask))
+    {
+        return true;
+    }
+
+    double cosa = std::cos(angle);
+    double sina = std::sin(angle);
+
+    for (int i=0; i<r.w; ++i)
+    {
+        for (int j=0; j<r.h; ++j)
+        {
+            if (al_get_pixel(wallmask, r.x + cosa*i - sina*j, r.y+sina*i + cosa*j).a != 0)
             {
                 return true;
             }

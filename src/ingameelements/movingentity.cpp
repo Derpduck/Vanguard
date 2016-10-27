@@ -1,6 +1,9 @@
 #include "ingameelements/movingentity.h"
 #include "gamestate.h"
 #include "entity.h"
+#include "engine.h"
+
+#include <cmath>
 
 MovingEntity::MovingEntity(uint64_t id_, Gamestate *state) : Entity(id_)
 {
@@ -25,4 +28,20 @@ void MovingEntity::interpolate(Entity *prev_entity, Entity *next_entity, double 
     y = prev_e->y + alpha*(next_e->y - prev_e->y);
     hspeed = prev_e->hspeed + alpha*(next_e->hspeed - prev_e->hspeed);
     vspeed = prev_e->vspeed + alpha*(next_e->vspeed - prev_e->vspeed);
+}
+
+void MovingEntity::serialize(Gamestate *state, WriteBuffer *buffer, bool fullupdate)
+{
+    buffer->write<double>(x);
+    buffer->write<double>(y);
+    buffer->write<float>(hspeed);
+    buffer->write<float>(vspeed);
+}
+
+void MovingEntity::deserialize(Gamestate *state, ReadBuffer *buffer, bool fullupdate)
+{
+    x = buffer->read<double>();
+    y = buffer->read<double>();
+    hspeed = buffer->read<float>();
+    vspeed = buffer->read<float>();
 }

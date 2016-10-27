@@ -9,6 +9,8 @@ Weapon::Weapon(uint64_t id_, Gamestate *state, EntityPtr owner_, WeaponChildPara
 {
     reloadanim.active(false);
     firinganim.active(false);
+
+    entitytype = WEAPON;
 }
 
 Weapon::~Weapon()
@@ -25,7 +27,7 @@ void Weapon::midstep(Gamestate *state, double frametime)
 {
     if (clip == 0)
     {
-        reload(state, frametime);
+        reload(state);
     }
     reloadanim.update(state, frametime);
     firinganim.update(state, frametime);
@@ -33,9 +35,9 @@ void Weapon::midstep(Gamestate *state, double frametime)
 
 void Weapon::endstep(Gamestate *state, double frametime)
 {
-    Character *c = state->get<Character>(owner);
-    x = c->x;
-    y = c->y;
+    Character *c = state->get<Player>(owner)->getcharacter(state);
+    x = c->x + c->getweaponpos_x() - 2*c->getweaponpos_x()*c->isflipped;
+    y = c->y + c->getweaponpos_y();
 }
 
 void Weapon::interpolate(Entity *prev_entity, Entity *next_entity, double alpha)
@@ -60,7 +62,7 @@ void Weapon::interpolate(Entity *prev_entity, Entity *next_entity, double alpha)
     aimdirection = prev_e->aimdirection + alpha*(next_e->aimdirection - prev_e->aimdirection);
 }
 
-void Weapon::reload(Gamestate *state, double frametime)
+void Weapon::reload(Gamestate *state)
 {
     if (clip < getclipsize() and not firinganim.active() and not reloadanim.active())
     {
@@ -72,5 +74,17 @@ void Weapon::reload(Gamestate *state, double frametime)
 
 void Weapon::setaim(double x_, double y_)
 {
-    aimdirection = std::atan2(y_, x_);
+    aimdirection = std::atan2(y_-y, x_-x);
+}
+
+void Weapon::serialize(Gamestate *state, WriteBuffer *buffer, bool fullupdate)
+{
+    // Hopefully no clip size goes above 255
+    buffer->write<uint8_t>(clip);
+}
+
+void Weapon::deserialize(Gamestate *state, ReadBuffer *buffer, bool fullupdate)
+{
+    // Hopefully no clip size goes above 255
+    clip = buffer->read<uint8_t>();
 }

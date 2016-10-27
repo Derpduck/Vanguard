@@ -22,11 +22,17 @@ class Weapon : public MovingEntity
         virtual void midstep(Gamestate *state, double frametime);
         virtual void endstep(Gamestate *state, double frametime);
         virtual void interpolate(Entity *prev_entity, Entity *next_entity, double alpha);
+        virtual void serialize(Gamestate *state, WriteBuffer *buffer, bool fullupdate);
+        virtual void deserialize(Gamestate *state, ReadBuffer *buffer, bool fullupdate);
 
-        virtual void fireprimary(Gamestate *state, double frametime) = 0;
-        virtual void firesecondary(Gamestate *state, double frametime) = 0;
+        virtual void fireprimary(Gamestate *state) = 0;
+        virtual void wantfireprimary(Gamestate *state) = 0;
+        virtual void firesecondary(Gamestate *state) = 0;
+        virtual void wantfiresecondary(Gamestate *state) = 0;
+        virtual void reload(Gamestate *state);
         virtual int getclipsize() = 0;
-        virtual void reload(Gamestate *state, double frametime);
+        virtual double getattachpoint_x() = 0;
+        virtual double getattachpoint_y() = 0;
         virtual WeaponChildParameters constructparameters(Gamestate *state) = 0;
 
         void restoreclip(Gamestate *state) {clip = getclipsize();}

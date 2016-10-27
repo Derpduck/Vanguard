@@ -6,24 +6,12 @@
 
 Animation::Animation(std::string path_) : timer(0, 0), path(path_)
 {
-    std::ifstream datafile("spriteoffsets.json");
-    nlohmann::json data;
-    data << datafile;
-    datafile.close();
-    nframes = data[path+" number of frames"];
-
-    timer.duration = data[path+" duration"];
+    loaddata();
 }
 
 Animation::Animation(std::string path_, std::function<void(Gamestate *state)> eventfunc_) : timer(eventfunc_, 0), path(path_)
 {
-    std::ifstream datafile("spriteoffsets.json");
-    nlohmann::json data;
-    data << datafile;
-    datafile.close();
-    nframes = data[path+" number of frames"];
-
-    timer.duration = data[path+" duration"];
+    loaddata();
 }
 
 Animation::~Animation()
@@ -31,9 +19,42 @@ Animation::~Animation()
     //dtor
 }
 
+void Animation::loaddata()
+{
+    std::ifstream datafile("gamedata.json");
+    nlohmann::json data;
+    data << datafile;
+    datafile.close();
+    try
+    {
+        timer.duration = data[path+" duration"];
+    }
+    catch (std::domain_error)
+    {
+        fprintf(stderr, "Error: Could not load %s animation duration!", path.c_str());
+        throw -1;
+    }
+
+    std::ifstream datafile2("sprites/spritedata.json");
+    nlohmann::json data2;
+    data2 << datafile2;
+    datafile2.close();
+    try
+    {
+        nframes = data2[path+" number of frames"];
+    }
+    catch (std::domain_error)
+    {
+        fprintf(stderr, "Error: Could not load %s animation number of frames!", path.c_str());
+        throw -1;
+    }
+}
+
 std::string Animation::getframe()
 {
-    return path+std::to_string(static_cast<int>(std::floor(nframes*timer.getpercent()))+1)+".png";
+    int f = static_cast<int>(std::floor(nframes*timer.getpercent()))+1;
+    f = std::min(std::max(f, 1), nframes);
+    return path+std::to_string(f);
 }
 
 void Animation::update(Gamestate *state, double dt)
@@ -50,7 +71,6 @@ void Animation::Animation::reset()
 {
     timer.reset();
 }
-
 
 
 

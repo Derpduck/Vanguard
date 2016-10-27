@@ -13,16 +13,23 @@ class Peacemaker : public Weapon
         std::string getsprite(Gamestate *state, bool mask) {return "";}
         std::unique_ptr<Entity> clone() {return std::unique_ptr<Entity>(new Peacemaker(*this));}
 
-        void fireprimary(Gamestate *state, double frametime) override;
-        void firesecondary(Gamestate *state, double frametime) override {}
+        void fireprimary(Gamestate *state) override;
+        void wantfireprimary(Gamestate *state) override;
+        void firesecondary(Gamestate *state) override;
+        void wantfiresecondary(Gamestate *state) override;
+        void midstep(Gamestate *state, double frametime) override;
+        void reload(Gamestate *state) override;
 
-        int getclipsize() {return 6;}
+        int getclipsize() override {return 6;}
+        double getattachpoint_x() override {return -3;}
+        double getattachpoint_y() override {return 8;}
+
         WeaponChildParameters constructparameters(Gamestate *state);
+        Animation fthanim;
+        bool isfthing;
     protected:
     private:
-        double xoffset = 0;
-        double yoffset = 0;
-        double bulletspeed = 500.0;
+        double bulletspeed = 1000.0;
 };
 
 #endif // PEACEMAKER_H

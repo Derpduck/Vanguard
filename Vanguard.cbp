@@ -14,6 +14,7 @@
 				<Compiler>
 					<Add directory="include" />
 					<Add directory="include/networking" />
+					<Add directory="include/ingameelements" />
 				</Compiler>
 				<Linker>
 					<Add library="allegro" />
@@ -31,6 +32,7 @@
 				<Compiler>
 					<Add directory="include" />
 					<Add directory="include/networking" />
+					<Add directory="include/ingameelements" />
 				</Compiler>
 				<Linker>
 					<Add library="allegro-5.0.10-mt" />
@@ -46,6 +48,7 @@
 				<Compiler>
 					<Add directory="include" />
 					<Add directory="include/networking" />
+					<Add directory="include/ingameelements" />
 				</Compiler>
 				<Linker>
 					<Add option="-static-libstdc++" />
@@ -73,18 +76,22 @@
 					<Add library="wsock32" />
 					<Add library="psapi" />
 					<Add library="shlwapi" />
+					<Add library="enet" />
+					<Add library="ws2_32" />
 				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wshadow" />
-			<Add option="-Wall" />
 			<Add option="-std=c++11" />
+			<Add option="-Wall" />
 			<Add directory="include" />
 		</Compiler>
 		<Linker>
 			<Add library="allegro" />
 			<Add library="allegro_image" />
+			<Add library="allegro_primitives" />
+			<Add library="enet" />
 		</Linker>
 		<Unit filename="include/animation.h" />
 		<Unit filename="include/datastructures.h" />
@@ -93,10 +100,12 @@
 		<Unit filename="include/gamestate.h" />
 		<Unit filename="include/global_constants.h" />
 		<Unit filename="include/ingameelements/character.h" />
+		<Unit filename="include/ingameelements/corpse.h" />
 		<Unit filename="include/ingameelements/explosion.h" />
 		<Unit filename="include/ingameelements/heroes/mccree.h" />
 		<Unit filename="include/ingameelements/map.h" />
 		<Unit filename="include/ingameelements/movingentity.h" />
+		<Unit filename="include/ingameelements/player.h" />
 		<Unit filename="include/ingameelements/projectile.h" />
 		<Unit filename="include/ingameelements/projectiles/flashbang.h" />
 		<Unit filename="include/ingameelements/projectiles/peacemakerbullet.h" />
@@ -106,7 +115,9 @@
 		<Unit filename="include/json.hpp" />
 		<Unit filename="include/mainmenu.h" />
 		<Unit filename="include/networking/buffer.h" />
-		<Unit filename="include/player.h" />
+		<Unit filename="include/networking/clientnetworker.h" />
+		<Unit filename="include/networking/networker.h" />
+		<Unit filename="include/networking/servernetworker.h" />
 		<Unit filename="include/renderer.h" />
 		<Unit filename="include/spriteloader.h" />
 		<Unit filename="include/timer.h" />
@@ -115,10 +126,12 @@
 		<Unit filename="src/engine.cpp" />
 		<Unit filename="src/gamestate.cpp" />
 		<Unit filename="src/ingameelements/character.cpp" />
+		<Unit filename="src/ingameelements/corpse.cpp" />
 		<Unit filename="src/ingameelements/explosion.cpp" />
 		<Unit filename="src/ingameelements/heroes/mccree.cpp" />
 		<Unit filename="src/ingameelements/map.cpp" />
 		<Unit filename="src/ingameelements/movingentity.cpp" />
+		<Unit filename="src/ingameelements/player.cpp" />
 		<Unit filename="src/ingameelements/projectile.cpp" />
 		<Unit filename="src/ingameelements/projectiles/flashbang.cpp" />
 		<Unit filename="src/ingameelements/projectiles/peacemakerbullet.cpp" />
@@ -127,7 +140,9 @@
 		<Unit filename="src/inputcatcher.cpp" />
 		<Unit filename="src/mainmenu.cpp" />
 		<Unit filename="src/networking/buffer.cpp" />
-		<Unit filename="src/player.cpp" />
+		<Unit filename="src/networking/clientnetworker.cpp" />
+		<Unit filename="src/networking/networker.cpp" />
+		<Unit filename="src/networking/servernetworker.cpp" />
 		<Unit filename="src/renderer.cpp" />
 		<Unit filename="src/spriteloader.cpp" />
 		<Unit filename="src/timer.cpp" />

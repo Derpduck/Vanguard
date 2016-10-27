@@ -1,7 +1,12 @@
 #include <cstdio>
 #include <string>
+#include <memory>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
+#include <allegro5/allegro_primitives.h>
+#define boolean enet_boolean
+#include <enet/enet.h>
+#undef boolean
 
 #include "inputcatcher.h"
 #include "engine.h"
@@ -9,6 +14,8 @@
 #include "datastructures.h"
 #include "global_constants.h"
 #include "mainmenu.h"
+#include "networking/servernetworker.h"
+#include "networking/clientnetworker.h"
 
 long int getmillisec();
 
@@ -28,6 +35,13 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    // Initialize primitives for drawing
+    if (!al_init_primitives_addon())
+    {
+        fprintf(stderr, "Fatal Error: Could not initialize primitives module!");
+        throw -1;
+    }
+
     // Initialize keyboard modules
     if (!al_install_keyboard())
     {
@@ -42,11 +56,18 @@ int main(int argc, char **argv)
         throw -1;
     }
 
+    // Initialize networking system
+    if (enet_initialize())
+    {
+        fprintf(stderr, "Fatal Error: Could not initialize enet!");
+        throw -1;
+    }
+
     // Create a display
     ALLEGRO_DISPLAY *display;
     al_set_new_display_option(ALLEGRO_VSYNC, 2, ALLEGRO_REQUIRE);
-    al_set_new_display_flags(ALLEGRO_OPENGL);
-    display = al_create_display(WINDOW_WIDTH, WINDOW_HEIGHT);
+    al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_RESIZABLE);
+    display = al_create_display(1280, 720);
     if(!display)
     {
         // FIXME: Make the error argument mean anything?
@@ -54,9 +75,29 @@ int main(int argc, char **argv)
         throw -1;
     }
 
+    //load font
+    //gg2 font as placeholder for now i guess
+    al_init_font_addon();
+    al_init_ttf_addon();
+    ALLEGRO_FONT *font = al_load_font("Vanguard Main Font.ttf", 12, ALLEGRO_TTF_MONOCHROME);
+    if (!font)
+    {
+      fprintf(stderr, "Could not load 'gg2bold.ttf'.\n");
+      throw -1;
+    }
+
 //    MainMenu *mainmenu = new MainMenu(display);
-//    GAMETYPE gametype;
-    double lasttimeupdated = al_get_time();
+    bool isserver;
+    if (argc >= 2)
+    {
+        // If there are any arguments
+        isserver = false;
+    }
+    else
+    {
+        isserver = true;
+    }
+//    double lasttimeupdated = al_get_time();
 //    bool run = true;
 //    while (run)
 //    {
@@ -68,50 +109,83 @@ int main(int argc, char **argv)
 //    }
 //    delete mainmenu;
 
-    InputCatcher *inputcatcher;
-    Engine *engine;
-    Renderer *renderer;
-    Gamestate *renderingstate;
-    try
-    {
-        // Initialize everything
-        // The various allegro initializations can throw errors
-        engine = new Engine();
-        renderer = new Renderer();
-        inputcatcher = new InputCatcher(display);
-        renderingstate = new Gamestate(engine);
-    }
-    catch (int e)
-    {
-        if (e == -1)
-        {
-            fprintf(stderr, "\nAllegro initialization failed.");
-        }
-        else
-        {
-            fprintf(stderr, "\nUNKNOWN ERROR HAPPENED");
-        }
-        return -1;
-    }
-    engine->loadmap("conflict");
-    EntityPtr myself = engine->newplayer();
-    // FIXME: Hack to make sure the oldstate is properly initialized
-    engine->update(0);
+    Engine engine(isserver);
+    Renderer renderer;
+    InputCatcher inputcatcher(display);
+    Gamestate renderingstate(&engine);
 
-    lasttimeupdated = al_get_time();
+    std::unique_ptr<Networker> networker;
+    if (isserver)
+    {
+        networker = std::unique_ptr<Networker>(new ServerNetworker());
+    }
+    else
+    {
+        networker = std::unique_ptr<Networker>(new ClientNetworker());
+    }
+
+    engine.loadmap("lijiang");
+    // FIXME: Hack to make sure the oldstate is properly initialized
+    engine.update(&(networker->sendbuffer), 0);
+
+    EntityPtr myself(0);
+    if (isserver)
+    {
+        myself = engine.currentstate->addplayer();
+        engine.currentstate->get<Player>(myself)->spawntimer.active = true;
+    }
+    else
+    {
+        ClientNetworker *n = reinterpret_cast<ClientNetworker*>(networker.get());
+        while (not n->isconnected())
+        {
+            n->receive(engine.currentstate.get());
+        }
+        myself = engine.currentstate->playerlist[engine.currentstate->playerlist.size()-1];
+    }
+
+    INPUT_CONTAINER pressed_keys;
+    INPUT_CONTAINER held_keys;
+    double mouse_x;
+    double mouse_y;
+
+    double enginetime = al_get_time();
+    double networkertime = al_get_time();
     while (true)
     {
         try
         {
-            while (al_get_time() - lasttimeupdated >= ENGINE_TIMESTEP)
+            while (al_get_time() - enginetime >= ENGINE_TIMESTEP)
             {
-                inputcatcher->run(myself, engine, renderer);
-                engine->update(ENGINE_TIMESTEP);
+                networker->receive(engine.currentstate.get());
+                inputcatcher.run(display, &pressed_keys, &held_keys, &mouse_x, &mouse_y);
+                if (not isserver)
+                {
+                    Character *c = engine.currentstate->get<Player>(myself)->getcharacter(engine.currentstate.get());
+                    if (c != 0)
+                    {
+                        ClientNetworker *n = reinterpret_cast<ClientNetworker*>(networker.get());
+                        n->sendinput(pressed_keys, held_keys, mouse_x/renderer.zoom+renderer.cam_x, mouse_y/renderer.zoom+renderer.cam_y);
+                    }
+                }
+                engine.setinput(myself, pressed_keys, held_keys, mouse_x/renderer.zoom+renderer.cam_x, mouse_y/renderer.zoom+renderer.cam_y);
+                engine.update(&(networker->sendbuffer), ENGINE_TIMESTEP);
+                networker->sendeventdata(engine.currentstate.get());
 
-                lasttimeupdated += ENGINE_TIMESTEP;
+                enginetime += ENGINE_TIMESTEP;
             }
-            renderingstate->interpolate(engine->oldstate.get(), engine->currentstate.get(), (al_get_time()-lasttimeupdated)/ENGINE_TIMESTEP);
-            renderer->render(display, renderingstate, myself);
+            if (isserver)
+            {
+                if (al_get_time() - networkertime >= NETWORKING_TIMESTEP)
+                {
+                    ServerNetworker *n = reinterpret_cast<ServerNetworker*>(networker.get());
+                    n->sendframedata(engine.currentstate.get());
+
+                    networkertime = al_get_time();
+                }
+            }
+            renderingstate.interpolate(engine.oldstate.get(), engine.currentstate.get(), (al_get_time()-enginetime)/ENGINE_TIMESTEP);
+            renderer.render(display, &renderingstate, myself);
         }
         catch (int e)
         {
@@ -124,6 +198,9 @@ int main(int argc, char **argv)
             return 0;
         }
     }
+    al_shutdown_font_addon();
+    al_shutdown_ttf_addon();
     al_destroy_display(display);
+    enet_deinitialize();
     return 0;
 }

@@ -19,25 +19,23 @@ class Mccree : public Character
         Rect getstandingcollisionrect(Gamestate *state) override;
         std::string getsprite(Gamestate *state, bool mask) override;
         std::unique_ptr<Entity> clone() {return std::unique_ptr<Entity>(new Mccree(*this));}
-        CharacterChildParameters constructparameters(uint64_t id_, Gamestate *state) override;
-        bool cangetinput(Gamestate *state) override {return not animstate()->rolling.active();}
+        CharacterChildParameters constructparameters(uint64_t id_, Gamestate *state, EntityPtr owner_) override;
+        std::string getcharacterfolder() {return "heroes/mccree/";}
+        bool cangetinput(Gamestate *state) override {return not rollanim.active();}
+        Health getmaxhp() override;
+        double getweaponpos_x() override {return crouchanim.active() ? 0 : -2;}
+        double getweaponpos_y() override {return crouchanim.active() ? 17 : 7;}
+        void useability1(Gamestate *state) override;
+        void useability2(Gamestate *state) override;
+        void drawhud(Renderer *renderer, Gamestate *state) override;
+        double passiveultcharge() override {return 0.4166666666666667;}
 
-        struct MccreeAnimationState : public AnimationState
-        {
-            Animation rolling;
-            Animation flashbang;
-            MccreeAnimationState() : AnimationState("heroes/mccree/"), rolling("heroes/mccree/roll/"), flashbang("heroes/mccree/flashbang/")
-            {
-                rolling.active(false);
-                flashbang.active(false);
-            }
-        };
-        MccreeAnimationState* animstate() override {return &animstate_;}
+        Animation rollanim;
+        Animation flashbanganim;
         Timer rollcooldown;
         Timer flashbangcooldown;
     protected:
     private:
-        MccreeAnimationState animstate_;
 };
 
 #endif // MCCREE_H

@@ -24,7 +24,7 @@ MainMenu::~MainMenu()
     al_destroy_event_queue(event_queue);
 }
 
-bool MainMenu::run(ALLEGRO_DISPLAY *display, GAMETYPE *gametype)
+bool MainMenu::run(ALLEGRO_DISPLAY *display)
 {
     ALLEGRO_EVENT event;
     bool finished = false;
@@ -71,7 +71,7 @@ bool MainMenu::run(ALLEGRO_DISPLAY *display, GAMETYPE *gametype)
     // use mousestate.x or .y for position of mouse on screen
 
     // Draw
-//    al_draw_bitmap(spriteloader.request_sprite("mainmenu/background.png"), 0, 0);
+//    al_draw_bitmap(spriteloader.requestsprite("mainmenu/background"), 0, 0);
 
     return not finished;
 }

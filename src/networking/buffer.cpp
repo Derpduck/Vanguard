@@ -6,14 +6,31 @@ Buffer::Buffer(void *data_, uint64_t datalen_) : data(data_), datalen(datalen_),
 }
 Buffer::~Buffer()
 {
-    // TODO: free data somehow
+    //dtor
 }
 
-ReadonlyBuffer::ReadonlyBuffer(void *data_, uint64_t datalen_) : Buffer(data_, datalen_)
+ReadBuffer::ReadBuffer(void *data_, uint64_t datalen_) : Buffer(data_, datalen_)
 {
     //ctor
 }
-ReadonlyBuffer::~ReadonlyBuffer()
+ReadBuffer::~ReadBuffer()
 {
-    // TODO: free data somehow
+    //dtor
+}
+
+WriteBuffer::WriteBuffer() : Buffer(std::malloc(32), 32)
+{
+    //ctor
+}
+WriteBuffer::~WriteBuffer()
+{
+    std::free(data);
+}
+void WriteBuffer::enlarge(uint64_t newsize)
+{
+    void *newdata = std::malloc(newsize);
+    std::memcpy(newdata, data, datalen);
+    std::free(data);
+    data = newdata;
+    datalen = newsize;
 }

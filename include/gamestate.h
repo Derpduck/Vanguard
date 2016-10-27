@@ -1,12 +1,13 @@
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
 
+#include <list>
 #include <unordered_map>
 #include <memory>
 
 #include "ingameelements/map.h"
 #include "datastructures.h"
-#include "player.h"
+#include "ingameelements/player.h"
 #include "ingameelements/character.h"
 
 // Circular reference
@@ -34,11 +35,20 @@ class Gamestate
             return static_cast<EntityT*>(entitylist[e.id].get());
         }
 
-        void update(double frametime);
+        void update(WriteBuffer *sendbuffer_, double frametime);
         std::unique_ptr<Gamestate> clone();
         void interpolate(Gamestate *prevstate, Gamestate *nextstate, double alpha);
+        EntityPtr addplayer();
+        void removeplayer(int playerid);
+        Player* findplayer(int playerid);
+        int findplayerid(EntityPtr player);
+        void serializesnapshot(WriteBuffer *buffer);
+        void deserializesnapshot(ReadBuffer *buffer);
+        void serializefull(WriteBuffer *buffer);
+        void deserializefull(ReadBuffer *buffer);
 
         std::unordered_map<int, std::unique_ptr<Entity>> entitylist;
+        std::vector<EntityPtr> playerlist;
 
         // Make gamestate move-assigneable, so that " = " doesn't copy but move.
         Gamestate & operator=(Gamestate &&)=default;
@@ -46,6 +56,7 @@ class Gamestate
         double time;
         std::shared_ptr<Map> currentmap;
         Engine *engine;
+        WriteBuffer *sendbuffer;
     protected:
     private:
         uint64_t entityidcounter;
