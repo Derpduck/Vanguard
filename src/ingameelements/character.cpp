@@ -12,6 +12,7 @@
 #include "ingameelements/corpse.h"
 #include "renderer.h"
 #include "ingameelements/heroes/mccree.h"
+#include "ingameelements/heroes/soldier76.h"
 #include "colorpalette.h"
 
 void Character::init(uint64_t id_, Gamestate &state, EntityPtr owner_)
@@ -417,6 +418,40 @@ void Character::render(Renderer &renderer, Gamestate &state)
 
                 al_set_target_bitmap(renderer.foreground);
                 std::string mainsprite = "ui/ingame/heroes/mccree/lockon";
+                ALLEGRO_BITMAP *skull = renderer.spriteloader.requestsprite(mainsprite);
+                double spriteoffset_x = renderer.spriteloader.get_spriteoffset_x(mainsprite)*renderer.zoom;
+                double spriteoffset_y = renderer.spriteloader.get_spriteoffset_y(mainsprite)*renderer.zoom;
+                double rel_x = (x - renderer.cam_x)*renderer.zoom;
+                double rel_y = (y - renderer.cam_y)*renderer.zoom;
+                double factor = (hp.total()-charge) / maxhp().total();
+                if (factor < 0)
+                {
+                    al_draw_bitmap(skull, rel_x-spriteoffset_x, rel_y-spriteoffset_y, 0);
+                    factor = 0;
+                }
+                al_draw_circle(rel_x, rel_y, 8+32*factor, al_map_rgb(253, 58, 58), 1);
+            }
+        }
+    }
+    
+    // Deadeye circle
+    Player &player = state.get<Player>(renderer.myself);
+    if (player.heroclass == SOLDIER76 and player.team != team)
+    {
+        if (state.exists(player.character))
+        {
+            Soldier76 &c = state.get<Soldier76>(player.character);
+            if (c.ulting.active)
+            {
+                double charge = 0;
+                Pulserifle &w = state.get<Pulserifle>(c.weapon);
+                if (w.deadeyetargets.count(owner.id) > 0)
+                {
+                    charge = w.deadeyetargets.at(owner.id);
+                }
+
+                al_set_target_bitmap(renderer.foreground);
+                std::string mainsprite = "ui/ingame/heroes/soldier76/lockon";
                 ALLEGRO_BITMAP *skull = renderer.spriteloader.requestsprite(mainsprite);
                 double spriteoffset_x = renderer.spriteloader.get_spriteoffset_x(mainsprite)*renderer.zoom;
                 double spriteoffset_y = renderer.spriteloader.get_spriteoffset_y(mainsprite)*renderer.zoom;

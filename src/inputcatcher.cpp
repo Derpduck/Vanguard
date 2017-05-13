@@ -69,6 +69,10 @@ void InputCatcher::run(ALLEGRO_DISPLAY *display, Gamestate &state, Networker &ne
                     case ALLEGRO_KEY_2:
                         newclass = REINHARDT;
                         break;
+                    
+                    case ALLEGRO_KEY_3:
+                        newclass = SOLDIER76;
+                        break;
 
                     case ALLEGRO_KEY_ESCAPE:
                         // Exit game

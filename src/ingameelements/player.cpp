@@ -4,6 +4,7 @@
 #include "ingameelements/character.h"
 #include "ingameelements/heroes/mccree.h"
 #include "ingameelements/heroes/reinhardt.h"
+#include "ingameelements/heroes/soldier76.h"
 #include "engine.h"
 #include "mapelements/spawnroom.h"
 #include "global.h"
@@ -95,6 +96,10 @@ void Player::spawn(Gamestate &state)
     else if (heroclass == REINHARDT)
     {
         character = state.make_entity<Reinhardt>(state, EntityPtr(id));
+    }
+    else if (heroclass == SOLDIER76)
+    {
+        character = state.make_entity<Soldier76>(state, EntityPtr(id));
     }
     else
     {

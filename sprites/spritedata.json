@@ -948,6 +948,322 @@
         17.0,
         34.0
     ],
+	    "heroes/soldier76/ number of frames": 0,
+    "heroes/soldier76/arm/ number of frames": 1,
+    "heroes/soldier76/arm/1_sprite.png": [
+        3.0,
+        -5.0
+    ],
+    "heroes/soldier76/corpse/ number of frames": 1,
+    "heroes/soldier76/corpse/1_sprite.png": [
+        23.0,
+        -26.0
+    ],
+    "heroes/soldier76/crouch/ number of frames": 1,
+    "heroes/soldier76/crouch/1_sprite.png": [
+        12.0,
+        -4.0
+    ],
+    "heroes/soldier76/crouchwalk/ number of frames": 4,
+    "heroes/soldier76/crouchwalk/1_sprite.png": [
+        10.0,
+        -4.0
+    ],
+    "heroes/soldier76/crouchwalk/2_sprite.png": [
+        10.0,
+        -4.0
+    ],
+    "heroes/soldier76/crouchwalk/3_sprite.png": [
+        10.0,
+        -4.0
+    ],
+    "heroes/soldier76/crouchwalk/4_sprite.png": [
+        10.0,
+        -4.0
+    ],
+    "heroes/soldier76/emote/ number of frames": 7,
+    "heroes/soldier76/emote/1_sprite.png": [
+        8.0,
+        7.0
+    ],
+    "heroes/soldier76/emote/2_sprite.png": [
+        8.0,
+        8.0
+    ],
+    "heroes/soldier76/emote/3_sprite.png": [
+        8.0,
+        8.0
+    ],
+    "heroes/soldier76/emote/4_sprite.png": [
+        8.0,
+        8.0
+    ],
+    "heroes/soldier76/emote/5_sprite.png": [
+        8.0,
+        7.0
+    ],
+    "heroes/soldier76/emote/6_sprite.png": [
+        10.0,
+        6.0
+    ],
+    "heroes/soldier76/emote/7_sprite.png": [
+        8.0,
+        6.0
+    ],
+    "heroes/soldier76/falling/ number of frames": 2,
+    "heroes/soldier76/falling/1_sprite.png": [
+        9.0,
+        9.0
+    ],
+    "heroes/soldier76/falling/2_sprite.png": [
+        12.0,
+        9.0
+    ],
+    "heroes/soldier76/fanthehammerloop/ number of frames": 2,
+    "heroes/soldier76/fanthehammerloop/1_sprite.png": [
+        3.0,
+        -2.0
+    ],
+    "heroes/soldier76/fanthehammerloop/2_sprite.png": [
+        3.0,
+        -3.0
+    ],
+    "heroes/soldier76/fanthehammerstart/ number of frames": 2,
+    "heroes/soldier76/fanthehammerstart/1_sprite.png": [
+        3.0,
+        -3.0
+    ],
+    "heroes/soldier76/fanthehammerstart/2_sprite.png": [
+        3.0,
+        -4.0
+    ],
+    "heroes/soldier76/firing/ number of frames": 4,
+    "heroes/soldier76/firing/1_sprite.png": [
+        5.0,
+        -3.0
+    ],
+    "heroes/soldier76/firing/2_sprite.png": [
+        4.0,
+        0.0
+    ],
+    "heroes/soldier76/firing/3_sprite.png": [
+        3.0,
+        -3.0
+    ],
+    "heroes/soldier76/firing/4_sprite.png": [
+        3.0,
+        -5.0
+    ],
+    "heroes/soldier76/flashbang/ number of frames": 4,
+    "heroes/soldier76/flashbang/1_sprite.png": [
+        -3.0,
+        6.0
+    ],
+    "heroes/soldier76/flashbang/2_sprite.png": [
+        -4.0,
+        -2.0
+    ],
+    "heroes/soldier76/flashbang/3_sprite.png": [
+        -4.0,
+        -2.0
+    ],
+    "heroes/soldier76/flashbang/4_sprite.png": [
+        -4.0,
+        -2.0
+    ],
+    "heroes/soldier76/flashbang_explosion/ number of frames": 6,
+    "heroes/soldier76/flashbang_explosion/1_sprite.png": [
+        19.0,
+        21.0
+    ],
+    "heroes/soldier76/flashbang_explosion/2_sprite.png": [
+        11.0,
+        12.0
+    ],
+    "heroes/soldier76/flashbang_explosion/3_sprite.png": [
+        7.0,
+        13.0
+    ],
+    "heroes/soldier76/flashbang_explosion/4_sprite.png": [
+        17.0,
+        21.0
+    ],
+    "heroes/soldier76/flashbang_explosion/5_sprite.png": [
+        15.0,
+        5.0
+    ],
+    "heroes/soldier76/flashbang_explosion/6_sprite.png": [
+        19.0,
+        7.0
+    ],
+    "heroes/soldier76/idle/ number of frames": 1,
+    "heroes/soldier76/idle/1_sprite.png": [
+        9.0,
+        6.0
+    ],
+    "heroes/soldier76/jump/ number of frames": 1,
+    "heroes/soldier76/jump/1_sprite.png": [
+        10.0,
+        7.0
+    ],
+    "heroes/soldier76/pinned/ number of frames": 1,
+    "heroes/soldier76/pinned/1_sprite.png": [
+        7.0,
+        6.0
+    ],
+    "heroes/soldier76/projectiles/ number of frames": 2,
+    "heroes/soldier76/projectiles/bullet_sprite.png": [
+        0.0,
+        1.0
+    ],
+    "heroes/soldier76/projectiles/flashbang_sprite.png": [
+        4.0,
+        2.0
+    ],
+    "heroes/soldier76/projectiletrail/ number of frames": 3,
+    "heroes/soldier76/projectiletrail/1_sprite.png": [
+        0.0,
+        5.0
+    ],
+    "heroes/soldier76/projectiletrail/2_sprite.png": [
+        0.0,
+        9.0
+    ],
+    "heroes/soldier76/projectiletrail/3_sprite.png": [
+        0.0,
+        8.0
+    ],
+    "heroes/soldier76/reload/ number of frames": 12,
+    "heroes/soldier76/reload/10_sprite.png": [
+        2.0,
+        5.0
+    ],
+    "heroes/soldier76/reload/11_sprite.png": [
+        2.0,
+        -1.0
+    ],
+    "heroes/soldier76/reload/12_sprite.png": [
+        3.0,
+        -4.0
+    ],
+    "heroes/soldier76/reload/1_sprite.png": [
+        3.0,
+        -5.0
+    ],
+    "heroes/soldier76/reload/2_sprite.png": [
+        3.0,
+        -6.0
+    ],
+    "heroes/soldier76/reload/3_sprite.png": [
+        3.0,
+        -1.0
+    ],
+    "heroes/soldier76/reload/4_sprite.png": [
+        3.0,
+        1.0
+    ],
+    "heroes/soldier76/reload/5_sprite.png": [
+        3.0,
+        6.0
+    ],
+    "heroes/soldier76/reload/6_sprite.png": [
+        3.0,
+        4.0
+    ],
+    "heroes/soldier76/reload/7_sprite.png": [
+        2.0,
+        4.0
+    ],
+    "heroes/soldier76/reload/8_sprite.png": [
+        2.0,
+        5.0
+    ],
+    "heroes/soldier76/reload/9_sprite.png": [
+        2.0,
+        5.0
+    ],
+    "heroes/soldier76/roll/ number of frames": 4,
+    "heroes/soldier76/roll/1_sprite.png": [
+        19.0,
+        -3.0
+    ],
+    "heroes/soldier76/roll/2_sprite.png": [
+        12.0,
+        -1.0
+    ],
+    "heroes/soldier76/roll/3_sprite.png": [
+        15.0,
+        -8.0
+    ],
+    "heroes/soldier76/roll/4_sprite.png": [
+        13.0,
+        3.0
+    ],
+    "heroes/soldier76/run/ number of frames": 8,
+    "heroes/soldier76/run/1_sprite.png": [
+        11.0,
+        5.0
+    ],
+    "heroes/soldier76/run/2_sprite.png": [
+        11.0,
+        4.0
+    ],
+    "heroes/soldier76/run/3_sprite.png": [
+        13.0,
+        3.0
+    ],
+    "heroes/soldier76/run/4_sprite.png": [
+        18.0,
+        4.0
+    ],
+    "heroes/soldier76/run/5_sprite.png": [
+        16.0,
+        5.0
+    ],
+    "heroes/soldier76/run/6_sprite.png": [
+        11.0,
+        4.0
+    ],
+    "heroes/soldier76/run/7_sprite.png": [
+        12.0,
+        3.0
+    ],
+    "heroes/soldier76/run/8_sprite.png": [
+        15.0,
+        4.0
+    ],
+    "heroes/soldier76/sleep/ number of frames": 1,
+    "heroes/soldier76/sleep/1_sprite.png": [
+        23.0,
+        -25.0
+    ],
+    "heroes/soldier76/stun/ number of frames": 1,
+    "heroes/soldier76/stun/1_sprite.png": [
+        11.0,
+        11.0
+    ],
+    "heroes/soldier76/ult/ number of frames": 1,
+    "heroes/soldier76/ult/1_sprite.png": [
+        20.0,
+        11.0
+    ],
+    "heroes/soldier76/ultwalk/ number of frames": 4,
+    "heroes/soldier76/ultwalk/1_sprite.png": [
+        20.0,
+        11.0
+    ],
+    "heroes/soldier76/ultwalk/2_sprite.png": [
+        20.0,
+        11.0
+    ],
+    "heroes/soldier76/ultwalk/3_sprite.png": [
+        20.0,
+        11.0
+    ],
+    "heroes/soldier76/ultwalk/4_sprite.png": [
+        20.0,
+        11.0
+    ],
     "ui/ number of frames": 0,
     "ui/Logo/ number of frames": 2,
     "ui/Logo/VanguardLogoTransparent.png": [
@@ -1013,6 +1329,31 @@
         64.0,
         70.5
     ],
+	    "ui/ingame/heroes/soldier76/ number of frames": 6,
+    "ui/ingame/heroes/soldier76/flashbang_sprite.png": [
+        28.0,
+        19.0
+    ],
+    "ui/ingame/heroes/soldier76/flashbangcooldown_sprite.png": [
+        28.0,
+        19.0
+    ],
+    "ui/ingame/heroes/soldier76/lockon_sprite.png": [
+        4.0,
+        4.5
+    ],
+    "ui/ingame/heroes/soldier76/rolling_sprite.png": [
+        28.0,
+        19.0
+    ],
+    "ui/ingame/heroes/soldier76/rollingcooldown_sprite.png": [
+        28.0,
+        19.0
+    ],
+    "ui/ingame/heroes/soldier76/ultready_sprite.png": [
+        64.0,
+        70.5
+    ],
     "ui/ingame/mccree/ number of frames": 10,
     "ui/ingame/mccree/LockON.png": [
         4.0,
@@ -1051,6 +1392,47 @@
         360.0
     ],
     "ui/ingame/mccree/ultbar.png": [
+        51.0,
+        58.5
+    ],
+	    "ui/ingame/soldier76/ number of frames": 10,
+    "ui/ingame/soldier76/LockON.png": [
+        4.0,
+        4.5
+    ],
+    "ui/ingame/soldier76/deadeye.png": [
+        64.0,
+        70.5
+    ],
+    "ui/ingame/soldier76/flashbang.png": [
+        28.0,
+        19.0
+    ],
+    "ui/ingame/soldier76/flashbangcooldown.png": [
+        28.0,
+        19.0
+    ],
+    "ui/ingame/soldier76/fullscreen.png": [
+        51.0,
+        -199.0
+    ],
+    "ui/ingame/soldier76/polygon.png": [
+        28.0,
+        17.0
+    ],
+    "ui/ingame/soldier76/rolling.png": [
+        28.0,
+        19.0
+    ],
+    "ui/ingame/soldier76/rollingcooldown.png": [
+        28.0,
+        19.0
+    ],
+    "ui/ingame/soldier76/tint.png": [
+        640.0,
+        360.0
+    ],
+    "ui/ingame/soldier76/ultbar.png": [
         51.0,
         58.5
     ],
