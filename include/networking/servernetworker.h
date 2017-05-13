@@ -1,5 +1,4 @@
-#ifndef SERVERNETWORKER_H
-#define SERVERNETWORKER_H
+#pragma once
 
 #include "networking/networker.h"
 #include <vector>
@@ -8,13 +7,12 @@
 class ServerNetworker : public Networker
 {
     public:
-        ServerNetworker();
-        virtual ~ServerNetworker();
-        void receive(Gamestate *state) override;
-        void sendeventdata(Gamestate *state) override;
-        void sendframedata(Gamestate *state);
+        ServerNetworker(WriteBuffer &sendbuffer_);
+        virtual ~ServerNetworker() override;
+        void receive(Gamestate &state) override;
+        void sendeventdata(Gamestate &state) override;
+        void sendframedata(Gamestate &state);
     protected:
     private:
 };
 
-#endif // SERVERNETWORKER_H

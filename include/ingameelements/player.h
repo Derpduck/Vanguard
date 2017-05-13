@@ -1,5 +1,4 @@
-#ifndef PLAYER_H
-#define PLAYER_H
+#pragma once
 
 #include <memory>
 
@@ -18,26 +17,28 @@ class Character;
 class Player : public Entity
 {
     public:
-        Player(uint64_t id_, Gamestate *state);
-        virtual ~Player() = default;
-        void beginstep(Gamestate *state, double frametime);
-        void midstep(Gamestate *state, double frametime);
-        void endstep(Gamestate *state, double frametime);
+        virtual void init(uint64_t id_, Gamestate &state);
+        virtual ~Player() override = default;
+        void beginstep(Gamestate &state, double frametime) override;
+        void midstep(Gamestate &state, double frametime) override;
+        void endstep(Gamestate &state, double frametime) override;
         void clone(Gamestate *oldstate, Gamestate *newstate);
-        void spawn(Gamestate *state);
-        bool isrootobject() {return true;}
-        void render(Renderer *renderer, Gamestate *state);
-        void interpolate(Entity *prev_entity, Entity *next_entity, double alpha);
-        std::unique_ptr<Entity> clone() {return std::unique_ptr<Entity>(new Player(*this));}
-        void serialize(Gamestate *state, WriteBuffer *buffer, bool fullupdate);
-        void deserialize(Gamestate *state, ReadBuffer *buffer, bool fullupdate);
-        void destroy(Gamestate *state);
+        void spawn(Gamestate &state);
+        void changeclass(Gamestate &state, Heroclass newclass);
+        bool isrootobject() override {return true;}
+        void render(Renderer &renderer, Gamestate &state) override;
+        void interpolate(Entity &prev_entity, Entity &next_entity, double alpha) override;
+        std::unique_ptr<Entity> clone() override {return std::unique_ptr<Entity>(new Player(*this));}
+        void serialize(Gamestate &state, WriteBuffer &buffer, bool fullupdate);
+        void deserialize(Gamestate &state, ReadBuffer &buffer, bool fullupdate);
+        void destroy(Gamestate &state) override;
 
-        Character* getcharacter(Gamestate *state);
+        Character& getcharacter(Gamestate &state);
 
         EntityPtr character;
         Timer spawntimer;
         Timer ultcharge;
+        Team team;
+        Heroclass heroclass;
 };
 
-#endif // PLAYER_H

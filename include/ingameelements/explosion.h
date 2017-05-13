@@ -1,5 +1,4 @@
-#ifndef EXPLOSION_H
-#define EXPLOSION_H
+#pragma once
 
 #include <ingameelements/movingentity.h>
 #include "animation.h"
@@ -8,15 +7,14 @@
 class Explosion : public MovingEntity
 {
     public:
-        Explosion(uint64_t id_, Gamestate *state, std::string animationpath, double direction_);
-        virtual ~Explosion();
-        void beginstep(Gamestate *state, double frametime) {}
-        void midstep(Gamestate *state, double frametime);
-        void endstep(Gamestate *state, double frametime) {}
-        std::string getsprite(Gamestate *state, bool mask) {return explosionanim.getframe();}
-        std::unique_ptr<Entity> clone() {return std::unique_ptr<Entity>(new Explosion(*this));}
-        void render(Renderer *renderer, Gamestate *state);
-        bool isrootobject() {return true;}
+        virtual void init(uint64_t id_, Gamestate &state, std::string animationpath, double direction_);
+        virtual ~Explosion() override = default;
+        void beginstep(Gamestate &state, double frametime) override;
+        void midstep(Gamestate &state, double frametime) override {}
+        void endstep(Gamestate &state, double frametime) override {}
+        std::unique_ptr<Entity> clone() override {return std::unique_ptr<Entity>(new Explosion(*this));}
+        void render(Renderer &renderer, Gamestate &state) override;
+        bool isrootobject() override {return true;}
 
         Animation explosionanim;
         double direction;
@@ -24,4 +22,3 @@ class Explosion : public MovingEntity
     private:
 };
 
-#endif // EXPLOSION_H

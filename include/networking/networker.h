@@ -1,5 +1,4 @@
-#ifndef NETWORKER_H
-#define NETWORKER_H
+#pragma once
 
 #include "gamestate.h"
 #define boolean enet_boolean
@@ -9,14 +8,12 @@
 class Networker
 {
     public:
-        Networker(bool isserver);
+        Networker(bool isserver, WriteBuffer &sendbuffer_);
         virtual ~Networker();
-        virtual void receive(Gamestate *state) = 0;
-        virtual void sendeventdata(Gamestate *state) = 0;
-        WriteBuffer sendbuffer;
-    protected:
+        virtual void receive(Gamestate &state) = 0;
+        virtual void sendeventdata(Gamestate &state) = 0;
+        WriteBuffer &sendbuffer;
         ENetHost *host;
     private:
 };
 
-#endif // NETWORKER_H

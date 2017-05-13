@@ -1,5 +1,4 @@
-#ifndef DATASTRUCTURES_H_INCLUDED
-#define DATASTRUCTURES_H_INCLUDED
+#pragma once
 
 #include <string>
 #include <functional>
@@ -7,7 +6,7 @@
 
 class Gamestate;
 
-enum HEROCLASS {ANA,
+enum Heroclass {ANA,
                 BASTION,
                 DVA,
                 GENJI,
@@ -21,6 +20,7 @@ enum HEROCLASS {ANA,
                 REAPER,
                 REINHARDT,
                 ROADHOG,
+                SOMBRA,
                 SOLDIER76,
                 SYMMETRA,
                 TORBJORN,
@@ -35,111 +35,144 @@ enum EVENTTYPE {SERVER_SNAPSHOTUPDATE,
                 CLIENT_INPUT,
                 PLAYER_JOINED,
                 PLAYER_LEFT,
+                PLAYER_CHANGECLASS,
                 PLAYER_SPAWNED,
                 PLAYER_DIED,
                 PRIMARY_FIRED,
                 SECONDARY_FIRED,
                 ABILITY1_USED,
                 ABILITY2_USED,
-                ULTIMATE_USED };
+                ULTIMATE_USED,
+                KOTH_CP_CREATED};
 
-enum ENTITYTYPE {   PLAYER,
-                    CHARACTER,
-                    WEAPON,
-                    PROJECTILE,
-                    EXPLOSION };
+enum PenetrationLevel { PENETRATE_NOTHING = 0,
+                        PENETRATE_CHARACTER = 1,
+                        PENETRATE_SHIELD = 2,
+                        PENETRATE_WALLMASK = 4};
 
-struct INPUT_CONTAINER
+enum class ENTITYTYPE { PLAYER,
+                        CHARACTER,
+                        WEAPON,
+                        PROJECTILE,
+                        EXPLOSION };
+
+enum Team { TEAM1,
+            TEAM2,
+            SPECTATOR,
+            NO_TEAM };
+
+struct ReducedInputContainer
 {
-    bool LEFT;
-    bool RIGHT;
+    public:
+        bool LEFT;
+        bool RIGHT;
+        bool CROUCH;
+        bool PRIMARY_FIRE;
+        bool SECONDARY_FIRE;
+        bool ABILITY_1;
+        bool ABILITY_2;
+
+        void serialize(WriteBuffer &buffer)
+        {
+            uint8_t d = 0;
+            d |= LEFT<<0;
+            d |= RIGHT<<1;
+            d |= CROUCH<<2;
+            d |= PRIMARY_FIRE<<3;
+            d |= SECONDARY_FIRE<<4;
+            d |= ABILITY_1<<5;
+            d |= ABILITY_2<<6;
+            buffer.write<uint8_t>(d);
+        }
+
+        void deserialize(ReadBuffer &buffer)
+        {
+            uint8_t d = buffer.read<uint8_t>();
+            LEFT = d & 1<<0;
+            RIGHT = d & 1<<1;
+            CROUCH = d & 1<<2;
+            PRIMARY_FIRE = d & 1<<3;
+            SECONDARY_FIRE = d & 1<<4;
+            ABILITY_1 = d & 1<<5;
+            ABILITY_2 = d & 1<<6;
+        }
+
+        void reset()
+        {
+            LEFT = false;
+            RIGHT = false;
+            CROUCH = false;
+            PRIMARY_FIRE = false;
+            SECONDARY_FIRE = false;
+            ABILITY_1 = false;
+            ABILITY_2 = false;
+        }
+};
+
+struct InputContainer : public ReducedInputContainer
+{
     bool JUMP;
-    bool CROUCH;
-    bool PRIMARY_FIRE;
-    bool SECONDARY_FIRE;
     bool RELOAD;
-    bool ABILITY_1;
-    bool ABILITY_2;
     bool ULTIMATE;
 
-    void serialize(WriteBuffer *buffer)
+    void serialize(WriteBuffer &buffer)
     {
-        uint16_t d = 0;
-        d |= LEFT<<1;
-        d |= RIGHT<<2;
-        d |= JUMP<<3;
-        d |= CROUCH<<4;
-        d |= PRIMARY_FIRE<<5;
-        d |= SECONDARY_FIRE<<6;
-        d |= RELOAD<<7;
-        d |= ABILITY_1<<8;
-        d |= ABILITY_2<<9;
-        d |= ULTIMATE<<10;
-        buffer->write<uint16_t>(d);
+        ReducedInputContainer::serialize(buffer);
+        uint8_t d = 0;
+        d |= JUMP<<0;
+        d |= RELOAD<<1;
+        d |= ULTIMATE<<2;
+        buffer.write<uint8_t>(d);
     }
 
-    void deserialize(ReadBuffer *buffer)
+    void deserialize(ReadBuffer &buffer)
     {
-        uint16_t d = buffer->read<uint16_t>();
-        LEFT = d & 1<<1;
-        RIGHT = d & 1<<2;
-        JUMP = d & 1<<3;
-        CROUCH = d & 1<<4;
-        PRIMARY_FIRE = d & 1<<5;
-        SECONDARY_FIRE = d & 1<<6;
-        RELOAD = d & 1<<7;
-        ABILITY_1 = d & 1<<8;
-        ABILITY_2 = d & 1<<9;
-        ULTIMATE = d & 1<<10;
+        ReducedInputContainer::deserialize(buffer);
+        uint8_t d = buffer.read<uint8_t>();
+        JUMP = d & 1<<0;
+        RELOAD = d & 1<<1;
+        ULTIMATE = d & 1<<2;
     }
 
     void reset()
     {
-        LEFT = false;
-        RIGHT = false;
+        ReducedInputContainer::reset();
         JUMP = false;
-        CROUCH = false;
-        PRIMARY_FIRE = false;
-        SECONDARY_FIRE = false;
         RELOAD = false;
-        ABILITY_1 = false;
-        ABILITY_2 = false;
         ULTIMATE = false;
     }
-};
 
-struct Health
-{
-    double normal;
-    double armor;
-    double shields;
-
-    double total()
+    ReducedInputContainer reduce()
     {
-        return normal + armor + shields;
+        ReducedInputContainer i;
+        i.LEFT = LEFT;
+        i.RIGHT = RIGHT;
+        i.CROUCH = CROUCH;
+        i.PRIMARY_FIRE = PRIMARY_FIRE;
+        i.SECONDARY_FIRE = SECONDARY_FIRE;
+        i.ABILITY_1 = ABILITY_1;
+        i.ABILITY_2 = ABILITY_2;
+        return i;
+    }
+
+    void update(ReducedInputContainer r)
+    {
+        LEFT = r.LEFT;
+        RIGHT = r.RIGHT;
+        CROUCH = r.CROUCH;
+        PRIMARY_FIRE = r.PRIMARY_FIRE;
+        SECONDARY_FIRE = r.SECONDARY_FIRE;
+        ABILITY_1 = r.ABILITY_1;
+        ABILITY_2 = r.ABILITY_2;
     }
 };
 
 struct EntityPtr
 {
     EntityPtr(uint64_t id_) : id(id_) {}
+    EntityPtr() : id(0) {}
     operator int() const { return id; }
     uint64_t id;
-};
-
-struct CharacterChildParameters
-{
-    double runpower = 0;
-    EntityPtr weapon = 0;
-    Health maxhp;
-    std::string characterfolder;
-};
-
-struct WeaponChildParameters
-{
-    int clipsize = 0;
-    std::string characterfolder;
-    std::function<void(Gamestate *state)> reloadfunction;
 };
 
 struct Rect
@@ -149,8 +182,7 @@ struct Rect
     double w;
     double h;
 
+    Rect() : x(0), y(0), w(0), h(0) {}
     Rect(double x_, double y_, double w_, double h_) : x(x_), y(y_), w(w_), h(h_) {}
     Rect offset(double x_, double y_) {return Rect(x+x_, y+y_, w, h);}
 };
-
-#endif // DATASTRUCTURES_H_INCLUDED

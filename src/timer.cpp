@@ -1,20 +1,21 @@
 #include <cmath>
+#include <iostream>
 
 #include "timer.h"
 
-Timer::Timer(std::function<void(Gamestate *state)> eventfunc_, double duration_) : timer(0), duration(duration_), active(true), eventfunc(eventfunc_)
+void Timer::init(double duration_, std::function<void(Gamestate &state)> eventfunc_)
 {
-    ;
+    Timer::init(duration_);
+    eventfunc = eventfunc_;
 }
 
-Timer::Timer(double duration_) : timer(0), duration(duration_), active(true), eventfunc(0)
+void Timer::init(double duration_)
 {
-    ;
-}
-
-Timer::~Timer()
-{
-    //dtor
+    timer = 0;
+    active = true;
+    eventfunc = nullptr;
+    duration = duration_;
+    inited = true;
 }
 
 void Timer::reset()
@@ -23,8 +24,14 @@ void Timer::reset()
     active=true;
 }
 
-void Timer::update(Gamestate *state, double dt)
+void Timer::update(Gamestate &state, double dt)
 {
+    if (not inited)
+    {
+        std::cout << "Fatal error: Timer update was called before init function!";
+        throw -1;
+    }
+
     if (active)
     {
         timer += dt;
@@ -41,14 +48,26 @@ void Timer::update(Gamestate *state, double dt)
 
 double Timer::getpercent()
 {
+    if (not inited)
+    {
+        std::cout << "Fatal error: Timer getpercent was called before init function!";
+        throw -1;
+    }
+
     // Max and min are for rounding errors
     return std::fmax(std::fmin(timer/duration, 1.0), 0.0);
 }
 
-void Timer::interpolate(Timer *prev_timer, Timer *next_timer, double alpha)
+void Timer::interpolate(Timer &prev_timer, Timer &next_timer, double alpha)
 {
-    if (prev_timer->active and next_timer->active)
+    if (not inited)
     {
-        timer = prev_timer->timer + alpha*(next_timer->timer - prev_timer->timer);
+        std::cout << "Fatal error: Timer interpolate was called before init function!";
+        throw -1;
+    }
+
+    if (prev_timer.active and next_timer.active)
+    {
+        timer = prev_timer.timer + alpha*(next_timer.timer - prev_timer.timer);
     }
 }

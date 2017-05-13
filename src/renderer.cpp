@@ -1,14 +1,18 @@
-#include <allegro5/allegro.h>
 #include <cstdio>
 #include <vector>
 #include <string>
+#include <allegro5/allegro.h>
+#include <engine.h>
 
 #include "renderer.h"
 #include "global_constants.h"
 #include "entity.h"
+#include "configloader.h"
+#include "global.h"
 
-Renderer::Renderer() : cam_x(0), cam_y(0), zoom(1), myself(0), WINDOW_WIDTH(1280), WINDOW_HEIGHT(720), spriteloader(false)
+Renderer::Renderer() : cam_x(0), cam_y(0), zoom(1), myself(0), WINDOW_WIDTH(0), WINDOW_HEIGHT(0), spriteloader(false)
 {
+    al_set_new_bitmap_flags(ALLEGRO_VIDEO_BITMAP);
     background = al_create_bitmap(WINDOW_WIDTH, WINDOW_HEIGHT);
     midground = al_create_bitmap(WINDOW_WIDTH, WINDOW_HEIGHT);
     foreground = al_create_bitmap(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -36,12 +40,13 @@ Renderer::~Renderer()
     al_destroy_bitmap(surfaceground);
 }
 
-void Renderer::render(ALLEGRO_DISPLAY *display, Gamestate *state, EntityPtr myself_)
+void Renderer::render(ALLEGRO_DISPLAY *display, Gamestate &state, EntityPtr myself_, Networker &networker)
 {
     myself = myself_;
 
     if (WINDOW_WIDTH != al_get_display_width(display) or WINDOW_HEIGHT != al_get_display_height(display))
     {
+        al_set_new_bitmap_flags(ALLEGRO_VIDEO_BITMAP);
         WINDOW_WIDTH = al_get_display_width(display);
         WINDOW_HEIGHT = al_get_display_height(display);
 
@@ -54,26 +59,20 @@ void Renderer::render(ALLEGRO_DISPLAY *display, Gamestate *state, EntityPtr myse
         midground = al_create_bitmap(WINDOW_WIDTH, WINDOW_HEIGHT);
         foreground = al_create_bitmap(WINDOW_WIDTH, WINDOW_HEIGHT);
         surfaceground = al_create_bitmap(WINDOW_WIDTH, WINDOW_HEIGHT);
+
+        zoom = 1.0*WINDOW_WIDTH / VIEWPORT_WIDTH;
+        spriteloader.setzoom(zoom);
     }
 
-    // Set up transformations
-    ALLEGRO_TRANSFORM *trans = const_cast<ALLEGRO_TRANSFORM*>(al_get_current_transform());
-    al_identity_transform(trans);
-
-    // Calculate zoom
-    zoom = 1.0*WINDOW_WIDTH / VIEWPORT_WIDTH;
-    al_scale_transform(trans, zoom, zoom);
-
     // Set camera
-    Player *p = state->get<Player>(myself);
-    Character *c = 0;
-    if (p != 0)
+    if (state.exists(myself))
     {
-        c = p->getcharacter(state);
-        if (c != 0)
+        Player &p = state.get<Player>(myself);
+        if (state.exists(p.character))
         {
-            cam_x = c->x - VIEWPORT_WIDTH/2.0;
-            cam_y = c->y - WINDOW_HEIGHT/zoom/2.0;
+            Character &c = p.getcharacter(state);
+            cam_x = c.x - VIEWPORT_WIDTH/2.0;
+            cam_y = c.y - WINDOW_HEIGHT/zoom/2.0;
         }
     }
 
@@ -87,11 +86,11 @@ void Renderer::render(ALLEGRO_DISPLAY *display, Gamestate *state, EntityPtr myse
     al_clear_to_color(al_map_rgba(0, 0, 0, 0));
 
     // Go through all objects and let them render themselves on the layers
-    for (auto& e : state->entitylist)
+    for (auto &e : state.entitylist)
     {
         if (e.second->isrootobject() and not e.second->destroyentity)
         {
-            e.second->render(this, state);
+            e.second->render(*this, state);
         }
     }
 
@@ -102,7 +101,7 @@ void Renderer::render(ALLEGRO_DISPLAY *display, Gamestate *state, EntityPtr myse
     al_clear_to_color(al_map_rgba(0, 0, 0, 1));
 
     // Draw the map background first
-    state->currentmap->renderbackground(cam_x, cam_y);
+    state.currentmap->renderbackground(*this);
 
     // Then draw each layer
     al_draw_bitmap(background, 0, 0, 0);
@@ -110,13 +109,10 @@ void Renderer::render(ALLEGRO_DISPLAY *display, Gamestate *state, EntityPtr myse
     al_draw_bitmap(foreground, 0, 0, 0);
 
     // Draw the map wallmask on top of everything, to prevent sprites that go through walls
-    state->currentmap->renderwallground(cam_x, cam_y);
+    state.currentmap->renderwallground(*this);
 
     // Draw the final layer on top of even that, for certain things like character healthbars
     al_draw_bitmap(surfaceground, 0, 0, 0);
-
-    // Go back to no scaling
-    al_identity_transform(trans);
 
 
     //fps counter mostly borrowed from pygg2
@@ -125,24 +121,52 @@ void Renderer::render(ALLEGRO_DISPLAY *display, Gamestate *state, EntityPtr myse
 
     al_draw_text(gg2font, al_map_rgb(255, 255, 255), 0, 0, ALLEGRO_ALIGN_LEFT, ("Frametime: " + std::to_string(frametime * 1000) + "ms").c_str());
     al_draw_text(gg2font, al_map_rgb(255, 255, 255), 0, 12, ALLEGRO_ALIGN_LEFT, ("FPS: " + std::to_string((int)(1/frametime))).c_str());
+    al_draw_text(gg2font, al_map_rgb(255, 255, 255), 0, 24, ALLEGRO_ALIGN_LEFT, ("Ping: " + std::to_string(networker.host->peers[0].roundTripTime)).c_str());
     al_draw_text(gg2font, al_map_rgb(255, 255, 255), 0, 60, ALLEGRO_ALIGN_LEFT, ("pos: " + std::to_string(cam_x+WINDOW_WIDTH/2.0) + " " + std::to_string(cam_y+WINDOW_HEIGHT/2.0)).c_str());
-    if (c != 0)
+    if (state.exists(myself) and state.exists(state.get<Player>(myself).character))
     {
-        al_draw_text(gg2font, al_map_rgb(255, 255, 255), 0, 72, ALLEGRO_ALIGN_LEFT, ("hspeed: " + std::to_string(c->hspeed)).c_str());
-        al_draw_text(gg2font, al_map_rgb(255, 255, 255), 0, 84, ALLEGRO_ALIGN_LEFT, ("vspeed: " + std::to_string(c->vspeed)).c_str());
+        Player &p = state.get<Player>(myself);
+        Character &c = p.getcharacter(state);
+        al_draw_text(gg2font, al_map_rgb(255, 255, 255), 0, 72, ALLEGRO_ALIGN_LEFT, ("hspeed: " + std::to_string(c.hspeed)).c_str());
+        al_draw_text(gg2font, al_map_rgb(255, 255, 255), 0, 84, ALLEGRO_ALIGN_LEFT, ("vspeed: " + std::to_string(c.vspeed)).c_str());
     }
     else
     {
         al_draw_text(gg2font, al_map_rgb(255, 255, 255), 0, 72, ALLEGRO_ALIGN_LEFT, "hspeed: 0.000000");
         al_draw_text(gg2font, al_map_rgb(255, 255, 255), 0, 84, ALLEGRO_ALIGN_LEFT, "vspeed: 0.000000");
     }
-    al_draw_text(gg2font, al_map_rgb(255, 255, 255), 0, 96, ALLEGRO_ALIGN_LEFT, ("#Players: " + std::to_string(state->playerlist.size())).c_str());
+    al_draw_text(gg2font, al_map_rgb(255, 255, 255), 0, 96, ALLEGRO_ALIGN_LEFT, ("#Players: " + std::to_string(state.playerlist.size())).c_str());
+    al_draw_text(gg2font, al_map_rgb(255, 255, 255), 0, 108, ALLEGRO_ALIGN_LEFT, ("Zoom: " + std::to_string(zoom)).c_str());
+    al_draw_text(gg2font, al_map_rgb(255, 255, 255), 0, 120, ALLEGRO_ALIGN_LEFT, state.engine.isserver ? "Server" : "Client");
 
 
-    if (c != 0)
+    if (state.exists(myself) and state.exists(state.get<Player>(myself).character))
     {
-        c->drawhud(this, state);
+        Player &p = state.get<Player>(myself);
+        p.getcharacter(state).drawhud(*this, state);
     }
 
     al_flip_display();
+}
+
+ALLEGRO_DISPLAY* Renderer::createnewdisplay()
+{
+    //default display values are set on header file
+    int display_width, display_height, display_type;
+
+    display_width = Global::settings().at("Display resolution").at(0);
+    display_height = Global::settings().at("Display resolution").at(1);
+    display_type = Global::settings().at("Display type");
+
+    al_set_new_display_option(ALLEGRO_VSYNC, Global::settings().at("Vsync"), ALLEGRO_SUGGEST);
+
+    ALLEGRO_DISPLAY *display;
+    al_set_new_display_flags(ALLEGRO_OPENGL | display_type);
+    display = al_create_display(display_width, display_height);
+
+    if(!display)
+    {
+        Global::logging().panic(__FILE__, __LINE__, "Could not create display");
+    }
+    return display;
 }

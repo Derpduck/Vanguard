@@ -1,15 +1,19 @@
 #include "networking/clientnetworker.h"
 
-ClientNetworker::ClientNetworker() : Networker(false), connected(false)
+#include "global.h"
+#include "ingameelements/gamemodes/kothmanager.h"
+
+ClientNetworker::ClientNetworker(WriteBuffer &sendbuffer_) : Networker(false, sendbuffer_), connected(false)
 {
     ENetAddress serveraddress;
     enet_address_set_host(&serveraddress, "127.0.0.1");
+//    enet_address_set_host(&serveraddress, "129.132.17.38");// Zurich server
+//    enet_address_set_host(&serveraddress, "76.10.161.121");// washy server
     serveraddress.port = 3224;
     host = enet_host_create(NULL, 1, 1, 0, 0);
     if (host == NULL)
     {
-        fprintf(stderr, "Fatal Error while attempting to create client host!");
-        throw -1;
+        Global::logging().panic(__FILE__, __LINE__, "Failed to create client host");
     }
     server = enet_host_connect(host, &serveraddress, 1, 0);
 }
@@ -19,7 +23,7 @@ ClientNetworker::~ClientNetworker()
     //dtor
 }
 
-void ClientNetworker::receive(Gamestate *state)
+void ClientNetworker::receive(Gamestate &state)
 {
     ENetEvent event;
     while (enet_host_service(host, &event, 0))
@@ -30,8 +34,7 @@ void ClientNetworker::receive(Gamestate *state)
         }
         else if (event.type == ENET_EVENT_TYPE_DISCONNECT)
         {
-            printf("\nDisconnected.");
-            throw 0;
+            Global::logging().panic(__FILE__, __LINE__, "Disconnected from server");
         }
         else if (event.type == ENET_EVENT_TYPE_RECEIVE)
         {
@@ -41,56 +44,76 @@ void ClientNetworker::receive(Gamestate *state)
                 int eventtype = data.read<uint8_t>();
                 if (eventtype == SERVER_FULLUPDATE)
                 {
-                    state->deserializefull(&data);
+                    state.deserializefull(data);
                     connected = true;
                 }
                 else if (eventtype == SERVER_SNAPSHOTUPDATE)
                 {
-                    state->deserializesnapshot(&data);
-                    state->update(&sendbuffer, 0);
+                    state.deserializesnapshot(data);
+                    // Resets gun arm position and a bunch of similar things to be up to date
+                    state.update(0);
                 }
                 else if (eventtype == PLAYER_JOINED)
                 {
-                    state->addplayer();
+                    state.addplayer();
                 }
                 else if (eventtype == PLAYER_LEFT)
                 {
                     int playerid = data.read<uint8_t>();
-                    state->removeplayer(playerid);
+                    state.removeplayer(playerid);
+                }
+                else if (eventtype == PLAYER_CHANGECLASS)
+                {
+                    int playerid = data.read<uint8_t>();
+                    state.findplayer(playerid).heroclass = (Heroclass)(data.read<uint8_t>());
                 }
                 else if (eventtype == PLAYER_SPAWNED)
                 {
                     int playerid = data.read<uint8_t>();
-                    state->findplayer(playerid)->spawn(state);
+                    state.findplayer(playerid).spawn(state);
                 }
                 else if (eventtype == PLAYER_DIED)
                 {
                     int playerid = data.read<uint8_t>();
-                    state->findplayer(playerid)->getcharacter(state)->destroy(state);
+                    state.findplayer(playerid).getcharacter(state).destroy(state);
                 }
                 else if (eventtype == PRIMARY_FIRED)
                 {
                     int playerid = data.read<uint8_t>();
-                    state->findplayer(playerid)->getcharacter(state)->getweapon(state)->fireprimary(state);
+                    state.findplayer(playerid).getcharacter(state).getweapon(state).fireprimary(state);
                 }
                 else if (eventtype == SECONDARY_FIRED)
                 {
                     int playerid = data.read<uint8_t>();
-                    state->findplayer(playerid)->getcharacter(state)->getweapon(state)->firesecondary(state);
+                    state.findplayer(playerid).getcharacter(state).getweapon(state).firesecondary(state);
                 }
                 else if (eventtype == ABILITY1_USED)
                 {
                     int playerid = data.read<uint8_t>();
-                    state->findplayer(playerid)->getcharacter(state)->useability1(state);
+                    state.findplayer(playerid).getcharacter(state).useability1(state);
                 }
                 else if (eventtype == ABILITY2_USED)
                 {
                     int playerid = data.read<uint8_t>();
-                    state->findplayer(playerid)->getcharacter(state)->useability2(state);
+                    state.findplayer(playerid).getcharacter(state).useability2(state);
+                }
+                else if (eventtype == ULTIMATE_USED)
+                {
+                    int playerid = data.read<uint8_t>();
+                    Player &p = state.findplayer(playerid);
+                    p.ultcharge.reset();
+                    p.ultcharge.active = false;
+                    p.getcharacter(state).useultimate(state);
+                }
+                else if (eventtype == KOTH_CP_CREATED)
+                {
+                    Team team = static_cast<Team>(data.read<uint8_t>());
+                    KothManager &km = static_cast<KothManager&>(state.currentmap->currentgamemode(state));
+                    km.createpoint(state, team);
                 }
                 else
                 {
-                    fprintf(stderr, "\nInvalid packet received on client: %i!", eventtype);
+                    Global::logging().panic(__FILE__, __LINE__, "Invalid packet received on client: %i", eventtype);
                 }
             }
             enet_packet_destroy(event.packet);
@@ -98,7 +121,7 @@ void ClientNetworker::receive(Gamestate *state)
     }
 }
 
-void ClientNetworker::sendeventdata(Gamestate *state)
+void ClientNetworker::sendeventdata(Gamestate &state)
 {
     if (sendbuffer.length() > 0)
     {
@@ -109,12 +132,11 @@ void ClientNetworker::sendeventdata(Gamestate *state)
     }
 }
 
-void ClientNetworker::sendinput(INPUT_CONTAINER pressedkeys, INPUT_CONTAINER heldkeys, float mouse_x, float mouse_y)
+void ClientNetworker::sendinput(InputContainer heldkeys, float mouse_x, float mouse_y)
 {
     WriteBuffer input = WriteBuffer();
     input.write<uint8_t>(CLIENT_INPUT);
-    pressedkeys.serialize(&input);
-    heldkeys.serialize(&input);
+    heldkeys.serialize(input);
     input.write<int16_t>(mouse_x);
     input.write<int16_t>(mouse_y);
     ENetPacket *inputpacket = enet_packet_create(input.getdata(), input.length(), 0);

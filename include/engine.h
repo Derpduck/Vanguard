@@ -1,5 +1,4 @@
-#ifndef ENGINE_H
-#define ENGINE_H
+#pragma once
 
 #include <string.h>
 
@@ -12,17 +11,16 @@ class Engine
     public:
         Engine(bool isserver_);
         ~Engine();
-        void update(WriteBuffer *sendbuffer, double frametime);
+        void update(double frametime);
         void loadmap(std::string mapname);
-        void setinput(EntityPtr myself, INPUT_CONTAINER pressed_keys, INPUT_CONTAINER held_keys, double mouse_x, double mouse_y);
 
         std::unique_ptr<Gamestate> currentstate;
         std::unique_ptr<Gamestate> oldstate;
         Spriteloader maskloader;
         bool isserver;
+        WriteBuffer sendbuffer;
 
         // Make engine move-assigneable, so that " = " doesn't copy but move.
         Engine & operator=(Engine &&)=default;
 };
 
-#endif // ENGINE_H

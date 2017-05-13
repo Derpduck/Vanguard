@@ -1,5 +1,4 @@
-#ifndef INPUTCATCHER_H
-#define INPUTCATCHER_H
+#pragma once
 
 #include <allegro5/allegro.h>
 
@@ -13,10 +12,9 @@ class InputCatcher
     public:
         InputCatcher(ALLEGRO_DISPLAY *display);
         ~InputCatcher();
-        void run(ALLEGRO_DISPLAY *display, INPUT_CONTAINER *pressed_keys, INPUT_CONTAINER *held_keys, double *mouse_x, double *mouse_y);
+        void run(ALLEGRO_DISPLAY *display, Gamestate &state, Networker &networker, Renderer &renderer, EntityPtr myself);
     private:
         ALLEGRO_EVENT_QUEUE *event_queue;
         nlohmann::json config;
 };
 
-#endif // INPUTCATCHER_H

@@ -1,5 +1,4 @@
-#ifndef FLASHBANG_H
-#define FLASHBANG_H
+#pragma once
 
 #include <ingameelements/projectile.h>
 
@@ -7,24 +6,22 @@
 class Flashbang : public Projectile
 {
     public:
-        Flashbang(uint64_t id_, Gamestate *state, EntityPtr owner_);
-        virtual ~Flashbang();
-        void beginstep(Gamestate *state, double frametime) {}
-        void midstep(Gamestate *state, double frametime);
-        std::string getsprite(Gamestate *state, bool mask) {return "heroes/mccree/projectiles/flashbang";}
-        std::unique_ptr<Entity> clone() {return std::unique_ptr<Entity>(new Flashbang(*this));}
-        bool isrectangular() {return true;}
-        Rect getrect() {return Rect(x-2, y-4, 3, 5);}
-        double getradius() {return 0;}
-        double damage() {return 0;}
-        void render(Renderer *renderer, Gamestate *state);
-        void explode(Gamestate *state);
-        void oncollision(Gamestate *state) {explode(state);}
-        void oncollision(Gamestate *state, Character *c) {explode(state);}
+        virtual void init(uint64_t id_, Gamestate &state, EntityPtr owner_) override;
+        virtual ~Flashbang() override = default;
+        void beginstep(Gamestate &state, double frametime) override;
+        void endstep(Gamestate &state, double frametime) override {}
+        std::unique_ptr<Entity> clone() override {return std::unique_ptr<Entity>(new Flashbang(*this));}
+        void render(Renderer &renderer, Gamestate &state) override;
+        double explode(Gamestate &state);
+        // Flashbang deals all its damage in explode() which is called in destroy() which registers ult charge itself
+        double dealdamage(Gamestate &state, Entity &target) override {return 0;}
+        void destroy(Gamestate &state) override;
+        PenetrationLevel penetration() override {return PENETRATE_NOTHING;}
+        std::string spriteid() override {return "heroes/mccree/projectiles/flashbang";}
 
         Timer countdown;
     protected:
     private:
+        double EXPLOSION_RADIUS = 40;
 };
 
-#endif // FLASHBANG_H

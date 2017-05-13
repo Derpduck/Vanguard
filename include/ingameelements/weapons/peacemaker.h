@@ -1,35 +1,43 @@
-#ifndef PEACEMAKER_H
-#define PEACEMAKER_H
+#pragma once
 
 #include "ingameelements/weapon.h"
+#include "ingameelements/clipweapon.h"
+#include <unordered_map>
 
-class Peacemaker : public Weapon
+class Peacemaker : public Clipweapon
 {
     public:
-        Peacemaker(uint64_t id_, Gamestate *state, EntityPtr owner_);
-        virtual ~Peacemaker();
+        virtual void init(uint64_t id_, Gamestate &state, EntityPtr owner_) override;
+        virtual ~Peacemaker() override = default;
 
-        void render(Renderer *renderer, Gamestate *state);
-        std::string getsprite(Gamestate *state, bool mask) {return "";}
-        std::unique_ptr<Entity> clone() {return std::unique_ptr<Entity>(new Peacemaker(*this));}
+        void render(Renderer &renderer, Gamestate &state) override;
+        std::unique_ptr<Entity> clone() override {return std::unique_ptr<Entity>(new Peacemaker(*this));}
 
-        void fireprimary(Gamestate *state) override;
-        void wantfireprimary(Gamestate *state) override;
-        void firesecondary(Gamestate *state) override;
-        void wantfiresecondary(Gamestate *state) override;
-        void midstep(Gamestate *state, double frametime) override;
-        void reload(Gamestate *state) override;
+        void fireprimary(Gamestate &state) override;
+        void wantfireprimary(Gamestate &state) override;
+        void firesecondary(Gamestate &state) override;
+        void wantfiresecondary(Gamestate &state) override;
+        void fireultimate(Gamestate &state);
+        void beginstep(Gamestate &state, double frametime) override;
+        void reload(Gamestate &state) override;
 
+        std::string herofolder() override {return "heroes/mccree/";}
         int getclipsize() override {return 6;}
-        double getattachpoint_x() override {return -3;}
-        double getattachpoint_y() override {return 8;}
+        std::function<void(Gamestate &state)> getreloadfunction(Gamestate &state) override {return std::bind(&Peacemaker::restoreclip, this, std::placeholders::_1);}
+        double getattachpoint_x(Gamestate &state) override {return -3;}
+        double getattachpoint_y(Gamestate &state) override {return 8;}
 
-        WeaponChildParameters constructparameters(Gamestate *state);
         Animation fthanim;
         bool isfthing;
+
+        std::unordered_map<int, double> deadeyetargets;
+        Animation deadeyeanim;
+        bool isfiringult;
     protected:
     private:
-        double bulletspeed = 1000.0;
+        double MAX_DAMAGE = 70;
+        double MAX_FTH_DAMAGE = 45;
+        double FALLOFF_BEGIN = 30*10;
+        double FALLOFF_END = 30*20;
 };
 
-#endif // PEACEMAKER_H

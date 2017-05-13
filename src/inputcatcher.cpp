@@ -5,8 +5,10 @@
 #include "inputcatcher.h"
 #include "datastructures.h"
 #include "renderer.h"
+#include "networking/clientnetworker.h"
 #include "ingameelements/character.h"
 #include "global_constants.h"
+#include "global.h"
 
 #define LEFT_MOUSE_BUTTON 1
 #define RIGHT_MOUSE_BUTTON 2
@@ -17,8 +19,7 @@ InputCatcher::InputCatcher(ALLEGRO_DISPLAY *display)
     event_queue = al_create_event_queue();
     if (!event_queue)
     {
-        fprintf(stderr, "Fatal Error: Could not create event queue!");
-        throw -1;
+        Global::logging().panic(__FILE__, __LINE__, "Could not create event queue");
     }
 
     // Connect the window, keyboard and mouse events to this event queue
@@ -36,10 +37,12 @@ InputCatcher::~InputCatcher()
     al_destroy_event_queue(event_queue);
 }
 
-void InputCatcher::run(ALLEGRO_DISPLAY *display, INPUT_CONTAINER *pressed_keys, INPUT_CONTAINER *held_keys, double *mouse_x, double *mouse_y)
+void InputCatcher::run(ALLEGRO_DISPLAY *display, Gamestate &state, Networker &networker, Renderer &renderer, EntityPtr myself)
 {
-    pressed_keys->reset();
-    held_keys->reset();
+    InputContainer heldkeys;
+    heldkeys.reset();
+
+    Player &player = state.get<Player>(myself);
 
     ALLEGRO_EVENT event;
     // Catch all events that have stacked up this frame. al_get_next_event() returns false when event_queue is empty, and contents of event are undefined
@@ -56,99 +59,74 @@ void InputCatcher::run(ALLEGRO_DISPLAY *display, INPUT_CONTAINER *pressed_keys, 
                 break;
 
             case ALLEGRO_EVENT_KEY_DOWN:
-                //Debug: print the keycode number and name of the key we press
-//                printf("\n%i\t%s", event.keyboard.keycode, al_keycode_to_name(event.keyboard.keycode));
-
-                if (event.keyboard.keycode == config["jump"] or event.keyboard.keycode == config["jump_alt1"] or event.keyboard.keycode == config["jump_alt2"])
-                {
-                    pressed_keys->JUMP = true;
-                }
-                if (event.keyboard.keycode == config["crouch"] or event.keyboard.keycode == config["crouch_alt1"] or event.keyboard.keycode == config["crouch_alt2"])
-                {
-                    pressed_keys->CROUCH = true;
-                }
-                if (event.keyboard.keycode == config["left"] or event.keyboard.keycode == config["left_alt1"] or event.keyboard.keycode == config["left_alt2"])
-                {
-                    pressed_keys->LEFT = true;
-                }
-                if (event.keyboard.keycode == config["right"] or event.keyboard.keycode == config["right_alt1"] or event.keyboard.keycode == config["right_alt2"])
-                {
-                    pressed_keys->RIGHT = true;
-                }
-                if (event.keyboard.keycode == config["right"] or event.keyboard.keycode == config["right_alt1"] or event.keyboard.keycode == config["right_alt2"])
-                {
-                    pressed_keys->RIGHT = true;
-                }
-                if (event.keyboard.keycode == config["ability1"] or event.keyboard.keycode == config["ability1_alt1"] or event.keyboard.keycode == config["ability1_alt2"])
-                {
-                    pressed_keys->ABILITY_1 = true;
-                }
-                if (event.keyboard.keycode == config["ability2"] or event.keyboard.keycode == config["ability2_alt1"] or event.keyboard.keycode == config["ability2_alt2"])
-                {
-                    pressed_keys->ABILITY_2 = true;
-                }
-                if (event.keyboard.keycode == config["ultimate"] or event.keyboard.keycode == config["ultimate_alt1"] or event.keyboard.keycode == config["ultimate_alt2"])
-                {
-                    pressed_keys->ULTIMATE = true;
-                }
-                if (event.keyboard.keycode == config["reload"] or event.keyboard.keycode == config["reload_alt1"] or event.keyboard.keycode == config["reload_alt2"])
-                {
-                    pressed_keys->RELOAD = true;
-                }
-
+                Heroclass newclass = player.heroclass;
                 switch (event.keyboard.keycode)
                 {
+                    case ALLEGRO_KEY_1:
+                        newclass = MCCREE;
+                        break;
+
+                    case ALLEGRO_KEY_2:
+                        newclass = REINHARDT;
+                        break;
+
                     case ALLEGRO_KEY_ESCAPE:
                         // Exit game
                         throw 0;
                 }
-
-            case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
-                switch (event.mouse.button)
+                if (newclass != player.heroclass)
                 {
-                    case LEFT_MOUSE_BUTTON:
-                        pressed_keys->PRIMARY_FIRE = true;
-                        break;
-                    case RIGHT_MOUSE_BUTTON:
-                        pressed_keys->SECONDARY_FIRE = true;
-                        break;
+                    // Player desires a class change
+                    if (state.engine.isserver)
+                    {
+                        player.changeclass(state, newclass);
+                        networker.sendbuffer.write<uint8_t>(PLAYER_CHANGECLASS);
+                        networker.sendbuffer.write<uint8_t>(state.findplayerid(player.id));
+                        networker.sendbuffer.write<uint8_t>(static_cast<uint8_t>(newclass));
+                    }
+                    else
+                    {
+                        networker.sendbuffer.write<uint8_t>(PLAYER_CHANGECLASS);
+                        networker.sendbuffer.write<uint8_t>(static_cast<uint8_t>(newclass));
+                    }
                 }
+                break;
         }
     }
 
     ALLEGRO_KEYBOARD_STATE keystate;
     al_get_keyboard_state(&keystate);
-    if (al_key_down(&keystate, config["jump"]) or al_key_down(&keystate, config["jump_alt1"]) or al_key_down(&keystate, config["jump_alt2"]))
+    if (al_key_down(&keystate, config.at("jump")) or al_key_down(&keystate, config.at("jump_alt1")) or al_key_down(&keystate, config.at("jump_alt2")))
     {
-        held_keys->JUMP = true;
+        heldkeys.JUMP = true;
     }
-    if (al_key_down(&keystate, config["crouch"]) or al_key_down(&keystate, config["crouch_alt1"]) or al_key_down(&keystate, config["crouch_alt2"]))
+    if (al_key_down(&keystate, config.at("crouch")) or al_key_down(&keystate, config.at("crouch_alt1")) or al_key_down(&keystate, config.at("crouch_alt2")))
     {
-        held_keys->CROUCH = true;
+        heldkeys.CROUCH = true;
     }
-    if (al_key_down(&keystate, config["left"]) or al_key_down(&keystate, config["left_alt1"]) or al_key_down(&keystate, config["left_alt2"]))
+    if (al_key_down(&keystate, config.at("left")) or al_key_down(&keystate, config.at("left_alt1")) or al_key_down(&keystate, config.at("left_alt2")))
     {
-        held_keys->LEFT = true;
+        heldkeys.LEFT = true;
     }
-    if (al_key_down(&keystate, config["right"]) or al_key_down(&keystate, config["right_alt1"]) or al_key_down(&keystate, config["right_alt2"]))
+    if (al_key_down(&keystate, config.at("right")) or al_key_down(&keystate, config.at("right_alt1")) or al_key_down(&keystate, config.at("right_alt2")))
     {
-        held_keys->RIGHT = true;
+        heldkeys.RIGHT = true;
     }
-    if (al_key_down(&keystate, config["ability1"]) or al_key_down(&keystate, config["ability1_alt1"]) or al_key_down(&keystate, config["ability1_alt2"]))
+    if (al_key_down(&keystate, config.at("ability1")) or al_key_down(&keystate, config.at("ability1_alt1")) or al_key_down(&keystate, config.at("ability1_alt2")))
     {
-        held_keys->ABILITY_1 = true;
+        heldkeys.ABILITY_1 = true;
     }
-    if (al_key_down(&keystate, config["ability2"]) or al_key_down(&keystate, config["ability2_alt1"]) or al_key_down(&keystate, config["ability2_alt2"]))
+    if (al_key_down(&keystate, config.at("ability2")) or al_key_down(&keystate, config.at("ability2_alt1")) or al_key_down(&keystate, config.at("ability2_alt2")))
     {
-        held_keys->ABILITY_2 = true;
+        heldkeys.ABILITY_2 = true;
     }
-    if (al_key_down(&keystate, config["ultimate"]) or al_key_down(&keystate, config["ultimate_alt1"]) or al_key_down(&keystate, config["ultimate_alt2"]))
+    if (al_key_down(&keystate, config.at("ultimate")) or al_key_down(&keystate, config.at("ultimate_alt1")) or al_key_down(&keystate, config.at("ultimate_alt2")))
     {
-        held_keys->ULTIMATE = true;
+        heldkeys.ULTIMATE = true;
     }
-    if (al_key_down(&keystate, config["reload"]) or al_key_down(&keystate, config["reload_alt1"]) or al_key_down(&keystate, config["reload_alt2"]))
+    if (al_key_down(&keystate, config.at("reload")) or al_key_down(&keystate, config.at("reload_alt1")) or al_key_down(&keystate, config.at("reload_alt2")))
     {
-        held_keys->RELOAD = true;
+        heldkeys.RELOAD = true;
     }
 
     ALLEGRO_MOUSE_STATE mousestate;
@@ -156,13 +134,24 @@ void InputCatcher::run(ALLEGRO_DISPLAY *display, INPUT_CONTAINER *pressed_keys, 
     // FIXME: I have no idea if these constants are correct, allegro docs don't mention the specifics, just that it starts with 1.
     if (mousestate.buttons & LEFT_MOUSE_BUTTON)
     {
-        held_keys->PRIMARY_FIRE = true;
+        heldkeys.PRIMARY_FIRE = true;
     }
     if (mousestate.buttons & RIGHT_MOUSE_BUTTON)
     {
-        held_keys->SECONDARY_FIRE = true;
+        heldkeys.SECONDARY_FIRE = true;
     }
 
-    *mouse_x = mousestate.x;
-    *mouse_y = mousestate.y;
+    if (state.exists(player.character))
+    {
+        Character &c = player.getcharacter(state);
+        // Set the input for our current character
+        c.setinput(state, heldkeys, mousestate.x/renderer.zoom+renderer.cam_x, mousestate.y/renderer.zoom+renderer.cam_y);
+
+        // If this is a client, send the input off to the server
+        if (not state.engine.isserver)
+        {
+            ClientNetworker &n = reinterpret_cast<ClientNetworker&>(networker);
+            n.sendinput(heldkeys, mousestate.x/renderer.zoom+renderer.cam_x, mousestate.y/renderer.zoom+renderer.cam_y);
+        }
+    }
 }

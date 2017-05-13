@@ -1,8 +1,8 @@
-#ifndef RENDERER_H
-#define RENDERER_H
+#pragma once
 
 #include "gamestate.h"
 #include "spriteloader.h"
+#include "networking/networker.h"
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_font.h>
@@ -13,7 +13,9 @@ class Renderer
     public:
         Renderer();
         virtual ~Renderer();
-        void render(ALLEGRO_DISPLAY *display, Gamestate *currentstate, EntityPtr myself_);
+        void render(ALLEGRO_DISPLAY *display, Gamestate &state, EntityPtr myself_, Networker &networker);
+        ALLEGRO_DISPLAY* createnewdisplay();
+        ALLEGRO_DISPLAY* createnewdisplay(const nlohmann::json &config);
         double cam_x;
         double cam_y;
         double zoom;
@@ -32,6 +34,5 @@ class Renderer
     protected:
     private:
         double lasttime;
+        const int DISPLAY_DEFAULT_TYPE = ALLEGRO_RESIZABLE;
 };
-
-#endif // RENDERER_H

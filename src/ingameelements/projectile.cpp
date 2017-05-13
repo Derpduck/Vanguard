@@ -3,68 +3,66 @@
 
 #include <cmath>
 
-Projectile::Projectile(double id_, Gamestate *state, EntityPtr owner_) : MovingEntity(id_, state), owner(owner_)
+void Projectile::init(uint64_t id_, Gamestate &state, EntityPtr owner_)
 {
-    entitytype = PROJECTILE;
+    MovingEntity::init(id_, state);
+
+    entitytype = ENTITYTYPE::PROJECTILE;
+    owner = owner_;
+    team = state.get<Player>(owner).team;
 }
 
-Projectile::~Projectile()
+void Projectile::beginstep(Gamestate &state, double frametime)
 {
-    //dtor
-}
-
-void Projectile::midstep(Gamestate *state, double frametime)
-{
-    if (isrectangular())
+    if (not (penetration() & PENETRATE_WALLMASK) and state.currentmap->collides(x, y, spriteid(), std::atan2(vspeed, hspeed)))
     {
-        if (state->currentmap->collides(getrect(), std::atan2(vspeed, hspeed)))
+        destroy(state);
+    }
+    for (auto &e : state.entitylist)
+    {
+        auto &entity = *(e.second);
+        if (not entity.destroyentity)
         {
-            oncollision(state);
-        }
-        for (auto p : state->playerlist)
-        {
-            // DEBUGTOOL: Replace this check with checking whether p is on enemy team
-            if (p != owner)
+            if (entity.damageableby(team) and checkcollision(state, entity))
             {
-                Character *c = state->get<Player>(p)->getcharacter(state);
-                if (c != 0)
+                dealdamage(state, entity);
+                if (entity.blocks(penetration()))
                 {
-                    if (collides(state, state->get<Player>(p)->character, std::atan2(vspeed, hspeed)))
-                    {
-                        oncollision(state, c);
-                    }
+                    destroy(state);
+                    break;
                 }
             }
         }
     }
 }
 
-bool Projectile::collides(Gamestate *state, EntityPtr otherentity, double angle)
+bool Projectile::checkcollision(Gamestate &state, Entity &target)
 {
-    MovingEntity *m = state->get<MovingEntity>(otherentity);
-    Rect self = state->engine->maskloader.get_rect(getsprite(state, true)).offset(x, y);
-    Rect other = state->engine->maskloader.get_rect(m->getsprite(state, true)).offset(m->x, m->y);
-
-    double maxdist = std::max(std::hypot(self.w, self.h), std::hypot(other.w, other.h));
-    if (std::hypot(self.x - other.x, self.y - other.y) <= maxdist)
+    Rect bbox = state.engine.maskloader.get_rect(spriteid());
+    double angle = std::atan2(vspeed, hspeed);
+    double target_x = 0, target_y = 0;
+    double maxdist = target.maxdamageabledist(state, &target_x, &target_y) + std::hypot(bbox.w, bbox.h);
+    if (std::hypot(x - target_x, y - target_y) > maxdist)
     {
-        // We're close enough that an actual collision might happen
-        // Check the sprites
-        ALLEGRO_BITMAP *selfsprite = state->engine->maskloader.requestsprite(getsprite(state, true));
-        ALLEGRO_BITMAP *othersprite = state->engine->maskloader.requestsprite(m->getsprite(state, true));
-
-        double cosa = std::cos(angle);
-        double sina = std::sin(angle);
-
-        double tmpx, tmpy;
-
-        for (int i=0; i<self.w; ++i)
+        return false;
+    }
+    // We're close enough that an actual collision might happen
+    ALLEGRO_BITMAP *sprite = state.engine.maskloader.requestsprite(spriteid());
+    double spriteoffset_x = state.engine.maskloader.get_spriteoffset_x(spriteid());
+    double spriteoffset_y = state.engine.maskloader.get_spriteoffset_y(spriteid());
+    double cosa = std::cos(angle), sina = std::sin(angle);
+    for (int i = 0; i < bbox.w; ++i)
+    {
+        double relx = i - spriteoffset_x;
+        for (int j = 0; j < bbox.h; ++j)
         {
-            for (int j=0; j<self.h; ++j)
+            if (al_get_pixel(sprite, i, j).a != 0)
             {
-                tmpx = self.x + cosa*i - sina*j;
-                tmpy = self.y + sina*i + cosa*j;
-                if (al_get_pixel(selfsprite, i, j).a != 0 and al_get_pixel(othersprite, tmpx - other.x, tmpy - other.y).a != 0)
+                // Rotate around (x,y) by angle
+                double rely = j - spriteoffset_y;
+                double rotx = x + cosa*relx - sina*rely;
+                double roty = y + sina*relx + cosa*rely;
+                if (target.collides(state, rotx, roty))
                 {
                     return true;
                 }
@@ -72,17 +70,4 @@ bool Projectile::collides(Gamestate *state, EntityPtr otherentity, double angle)
         }
     }
     return false;
-}
-
-void Projectile::oncollision(Gamestate *state, Character *c)
-{
-    // Collided with player
-    c->damage(state, damage());
-    destroy(state);
-}
-
-void Projectile::oncollision(Gamestate *state)
-{
-    // Collided with wallmask
-    destroy(state);
 }

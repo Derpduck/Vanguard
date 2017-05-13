@@ -1,5 +1,4 @@
-#ifndef PROJECTILE_H
-#define PROJECTILE_H
+#pragma once
 
 #include "datastructures.h"
 #include "gamestate.h"
@@ -7,20 +6,18 @@
 class Projectile : public MovingEntity
 {
     public:
-        Projectile(double id_, Gamestate *state, EntityPtr owner_);
-        virtual ~Projectile();
-        virtual bool isrootobject() {return true;}
-        virtual bool isrectangular() = 0;
-        virtual Rect getrect() = 0;
-        virtual double getradius() = 0;
-        virtual void oncollision(Gamestate *state, Character *c);
-        virtual void oncollision(Gamestate *state);
-        virtual double damage() = 0;
-        virtual void midstep(Gamestate *state, double frametime);
-        virtual bool collides(Gamestate *state, EntityPtr otherentity, double angle);
+        virtual void init(uint64_t id_, Gamestate &state, EntityPtr owner_);
+        virtual ~Projectile() override = default;
+        virtual bool isrootobject() override {return true;}
+        virtual bool isowner(EntityPtr potential_owner) {return potential_owner == owner;}
+        virtual double dealdamage(Gamestate &state, Entity &target) = 0;
+        virtual PenetrationLevel penetration() = 0;
+        virtual std::string spriteid() = 0;
+        virtual bool checkcollision(Gamestate &state, Entity &target);
+        virtual void beginstep(Gamestate &state, double frametime) override;
         EntityPtr owner;
+        Team team;
     protected:
     private:
 };
 
-#endif // PROJECTILE_H
